@@ -1,0 +1,75 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Skill;
+use Illuminate\Http\Request;
+
+class SkillController extends Controller
+{
+    public function index()
+    {
+        $skills = Skill::orderBy('id')->get();
+
+        return view('back.skill.index', compact('skills'));
+    }
+
+    public function create()
+    {
+        return view('back.skill.create');
+    }
+
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+        ], [
+            'nama.required' => 'Nama skill harus diisi.',
+        ]);
+
+        Skill::create($validated);
+        sweetalert()->success('Skill berhasil ditambahkan.');
+
+        return redirect('/skill');
+    }
+
+    public function edit($id)
+    {
+        $skill = Skill::findOrFail($id);
+
+        return view('back.skill.edit', compact('skill'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $skill = Skill::findOrFail($id);
+
+        $validated = $request->validate([
+            'nama' => 'required|string|max:255',
+        ], [
+            'nama.required' => 'Nama skill harus diisi.',
+        ]);
+
+        $skill->update($validated);
+        sweetalert()->success('Skill berhasil diupdate.');
+
+        return redirect('/skill');
+    }
+
+    public function delete($id)
+    {
+        $skill = Skill::findOrFail($id);
+
+        return view('back.skill.delete', compact('skill'));
+    }
+
+    public function destroy($id)
+    {
+        $skill = Skill::findOrFail($id);
+        $skill->delete();
+
+        sweetalert()->success('Skill berhasil dihapus.');
+
+        return redirect('/skill');
+    }
+}
