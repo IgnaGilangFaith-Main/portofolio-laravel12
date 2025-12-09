@@ -368,7 +368,7 @@ class HomepageController extends Controller
 ### HeroController
 
 ```bash
-php artisan make:controller HeroController --resource
+php artisan make:controller HeroController
 ```
 
 Kode lengkap `app/Http/Controllers/HeroController.php`:
@@ -570,7 +570,7 @@ class HeroController extends Controller
 ### AboutController
 
 ```bash
-php artisan make:controller AboutController --resource
+php artisan make:controller AboutController
 ```
 
 Kode lengkap `app/Http/Controllers/AboutController.php`:
@@ -692,7 +692,7 @@ class AboutController extends Controller
 ### SkillController
 
 ```bash
-php artisan make:controller SkillController --resource
+php artisan make:controller SkillController
 ```
 
 Kode lengkap `app/Http/Controllers/SkillController.php`:
@@ -799,7 +799,7 @@ class SkillController extends Controller
 ### ProjectController
 
 ```bash
-php artisan make:controller ProjectController --resource
+php artisan make:controller ProjectController
 ```
 
 Kode lengkap `app/Http/Controllers/ProjectController.php`:
@@ -1219,78 +1219,53 @@ Route::middleware(['auth'])->group(function () {
 
 ### Layout
 
-Buat `resources/views/layouts/app.blade.php`:
+Buat `resources/views/layouts/back.blade.php` untuk admin panel:
 
 ```php
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Portfolio')</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>@yield('title', 'Dashboard') - Admin Panel</title>
+    <link rel="shortcut icon" href="{{ asset('icon/icon.png') }}" type="image/x-icon" />
+    <!-- Bootstrap CSS -->
+    <link href="{{ asset('bootstrap-5.3.8-dist/css/bootstrap.min.css') }}" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="{{ asset('back/css/layout.css') }}">
     @stack('styles')
 </head>
 <body>
-    @include('layouts.navbar')
-
-    <div class="container mt-4">
-        @yield('content')
-    </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Sidebar dan navbar sesuai kode project -->
+    @yield('content')
+    <script src="{{ asset('bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
 ```
 
-Buat `resources/views/layouts/navbar.blade.php`:
+Buat `resources/views/layouts/front.blade.php` untuk homepage:
 
 ```php
-<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
-    <div class="container">
-        <a class="navbar-brand" href="/">Portfolio</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <ul class="navbar-nav me-auto">
-                <li class="nav-item">
-                    <a class="nav-link" href="/">Home</a>
-                </li>
-                @auth
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown">
-                        Admin
-                    </a>
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item" href="/hero">Hero</a></li>
-                        <li><a class="dropdown-item" href="/about">About</a></li>
-                        <li><a class="dropdown-item" href="/skill">Skills</a></li>
-                        <li><a class="dropdown-item" href="/project">Projects</a></li>
-                        <li><a class="dropdown-item" href="/pengaturan-akun">Account</a></li>
-                    </ul>
-                </li>
-                @endauth
-            </ul>
-            <ul class="navbar-nav">
-                @guest
-                <li class="nav-item">
-                    <a class="nav-link" href="/login">Login</a>
-                </li>
-                @else
-                <li class="nav-item">
-                    <form method="POST" action="/logout" class="d-inline">
-                        @csrf
-                        <button type="submit" class="btn btn-link nav-link">Logout</button>
-                    </form>
-                </li>
-                @endguest
-            </ul>
-        </div>
-    </div>
-</nav>
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@yield('title', 'Portfolio')</title>
+    <link rel="shortcut icon" href="{{ asset('icon/icon.png') }}" type="image/x-icon" />
+    <link href="{{ asset('bootstrap-5.3.8-dist/css/bootstrap.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
+    <link rel="stylesheet" href="{{ asset('front/style.css') }}" />
+</head>
+<body>
+    <!-- Navbar front -->
+    @yield('content')
+    <script src="{{ asset('bootstrap-5.3.8-dist/js/bootstrap.bundle.min.js') }}"></script>
+</body>
+</html>
 ```
 
 ### Front Views
@@ -1298,215 +1273,29 @@ Buat `resources/views/layouts/navbar.blade.php`:
 `resources/views/front/index.blade.php`:
 
 ```php
-@extends('layouts.app')
+@extends('layouts.front')
 
 @section('title', 'Home')
 
 @section('content')
-<div class="row">
-    @foreach($heroes as $hero)
-    <div class="col-md-12 mb-4">
-        <div class="card">
-            <img src="{{ asset('img/hero/' . $hero->foto) }}" class="card-img-top" alt="{{ $hero->nama }}">
-            <div class="card-body">
-                <h5 class="card-title">{{ $hero->nama }}</h5>
-                <p class="card-text">{{ $hero->moto }}</p>
-                <p class="card-text">{{ $hero->deskripsi }}</p>
-            </div>
-        </div>
-    </div>
-    @endforeach
-</div>
-
-<div class="row">
-    @foreach($abouts as $about)
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h5 class="card-title">{{ $about->judul }}</h5>
-                <p class="card-text">{{ $about->deskripsi }}</p>
-                @if($about->pendidikan)
-                <p><strong>Pendidikan:</strong> {{ $about->pendidikan }}</p>
-                @endif
-                @if($about->gpa)
-                <p><strong>GPA:</strong> {{ $about->gpa }}</p>
-                @endif
-                @if($about->lokasi)
-                <p><strong>Lokasi:</strong> {{ $about->lokasi }}</p>
-                @endif
-            </div>
-        </div>
-    </div>
-    @endforeach
-</div>
-
-<div class="row">
-    <div class="col-md-12 mb-4">
-        <h3>Skills</h3>
-        <ul class="list-group">
-            @foreach($skills as $skill)
-            <li class="list-group-item">{{ $skill->nama }}</li>
-            @endforeach
-        </ul>
-    </div>
-</div>
-
-<div class="row">
-    @foreach($projects as $project)
-    <div class="col-md-4 mb-4">
-        <div class="card">
-            <img src="{{ asset('img/project/' . $project->foto) }}" class="card-img-top" alt="{{ $project->judul_proyek }}">
-            <div class="card-body">
-                <h5 class="card-title">{{ $project->judul_proyek }}</h5>
-                <p class="card-text">{{ $project->deskripsi_proyek }}</p>
-                @if($project->link)
-                <a href="{{ $project->link }}" class="btn btn-primary" target="_blank">View Project</a>
-                @endif
-            </div>
-        </div>
-    </div>
-    @endforeach
-</div>
+<!-- Konten homepage sesuai kode project -->
 @endsection
 ```
 
 ### Back Views
 
-`resources/views/back/hero/index.blade.php`:
+Semua view di `resources/views/back/` menggunakan `@extends('layouts.back')` dengan sections: `@section('title')`, `@section('breadcrumb')`, `@section('content')`.
+
+Struktur breadcrumb:
 
 ```php
-@extends('layouts.app')
-
-@section('title', 'Manage Hero')
-
-@section('content')
-<h1>Hero Management</h1>
-<a href="{{ url('/hero/create') }}" class="btn btn-primary mb-3">Add Hero</a>
-<table class="table">
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nama</th>
-            <th>Moto</th>
-            <th>Foto</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($heroes as $hero)
-        <tr>
-            <td>{{ $hero->id }}</td>
-            <td>{{ $hero->nama }}</td>
-            <td>{{ $hero->moto }}</td>
-            <td><img src="{{ asset('img/hero/' . $hero->foto) }}" width="50" alt=""></td>
-            <td>
-                <a href="{{ url('/hero/' . $hero->id . '/edit') }}" class="btn btn-warning btn-sm">Edit</a>
-                <a href="{{ url('/hero/' . $hero->id . '/delete') }}" class="btn btn-danger btn-sm">Delete</a>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+@section('breadcrumb')
+    <li class="breadcrumb-item"><a href="{{ url('/hero') }}">Hero</a></li>
+    <li class="breadcrumb-item active">Action</li>
 @endsection
 ```
 
-`resources/views/back/hero/create.blade.php`:
-
-```php
-@extends('layouts.app')
-
-@section('title', 'Add Hero')
-
-@section('content')
-<h1>Add Hero</h1>
-<form action="{{ url('/hero/create') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    <div class="mb-3">
-        <label for="nama" class="form-label">Nama</label>
-        <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama') }}" required>
-        @error('nama') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="moto" class="form-label">Moto</label>
-        <input type="text" class="form-control" id="moto" name="moto" value="{{ old('moto') }}" required>
-        @error('moto') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="deskripsi" class="form-label">Deskripsi</label>
-        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" required>{{ old('deskripsi') }}</textarea>
-        @error('deskripsi') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="foto" class="form-label">Foto</label>
-        <input type="file" class="form-control" id="foto" name="foto" accept="image/*" required>
-        @error('foto') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <button type="submit" class="btn btn-primary">Save</button>
-</form>
-@endsection
-```
-
-`resources/views/back/hero/edit.blade.php`:
-
-```php
-@extends('layouts.app')
-
-@section('title', 'Edit Hero')
-
-@section('content')
-<h1>Edit Hero</h1>
-<form action="{{ url('/hero/' . $hero->id . '/update') }}" method="POST" enctype="multipart/form-data">
-    @csrf
-    @method('PUT')
-    <div class="mb-3">
-        <label for="nama" class="form-label">Nama</label>
-        <input type="text" class="form-control" id="nama" name="nama" value="{{ old('nama', $hero->nama) }}" required>
-        @error('nama') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="moto" class="form-label">Moto</label>
-        <input type="text" class="form-control" id="moto" name="moto" value="{{ old('moto', $hero->moto) }}" required>
-        @error('moto') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="deskripsi" class="form-label">Deskripsi</label>
-        <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3" required>{{ old('deskripsi', $hero->deskripsi) }}</textarea>
-        @error('deskripsi') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <div class="mb-3">
-        <label for="foto" class="form-label">Foto</label>
-        <input type="file" class="form-control" id="foto" name="foto" accept="image/*">
-        @if($hero->foto)
-        <img src="{{ asset('img/hero/' . $hero->foto) }}" width="100" alt="">
-        @endif
-        @error('foto') <div class="text-danger">{{ $message }}</div> @enderror
-    </div>
-    <button type="submit" class="btn btn-primary">Update</button>
-</form>
-@endsection
-```
-
-`resources/views/back/hero/delete.blade.php`:
-
-```php
-@extends('layouts.app')
-
-@section('title', 'Delete Hero')
-
-@section('content')
-<h1>Delete Hero</h1>
-<p>Are you sure you want to delete this hero?</p>
-<p><strong>{{ $hero->nama }}</strong></p>
-<form action="{{ url('/hero/' . $hero->id . '/delete') }}" method="POST">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="btn btn-danger">Delete</button>
-    <a href="{{ url('/hero') }}" class="btn btn-secondary">Cancel</a>
-</form>
-@endsection
-```
-
-### About Views
+Konten form dan tabel sesuai kode project yang ada. Pastikan semua form edit menggunakan `@method('PUT')`.
 
 `resources/views/back/about/index.blade.php`:
 
