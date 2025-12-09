@@ -18,7 +18,7 @@ Route::get('/', [HomepageController::class, 'index']);
 // Auth Routes
 Route::get('/login', function () {
     return view('back.login');
-})->name('login');
+});
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware(['auth'])->group(function () {
@@ -29,7 +29,7 @@ Route::middleware(['auth'])->group(function () {
     Route::prefix('dashboard')->group(function () {
         Route::get('/', function () {
             return view('back.dashboard');
-        })->name('dashboard');
+        });
     });
 
     // Hero Routes

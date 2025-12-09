@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Carbon\Carbon;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,8 +12,7 @@ class UserController extends Controller
 {
     public function index()
     {
-        $user = Auth::user();
-        $data = User::where('id', $user->id)->first();
+        $data = Auth::user();
 
         return view('back.user.index', compact('data'));
     }
@@ -29,17 +29,16 @@ class UserController extends Controller
         $request->validate([
             'name' => 'required',
             'email' => 'required|email|unique:users,email,'.$id,
-            'new_password' => 'nullable|min:6|same:new_password_confirmation|required_with:new_password_confirmation',
-            'new_password_confirmation' => 'required_with:new_password',
+            'new_password' => 'nullable|min:6',
+            'new_password_confirmation' => 'nullable|same:new_password|required_with:new_password',
         ], [
             'name.required' => 'Nama wajib diisi!',
             'email.required' => 'Email wajib diisi!',
             'email.email' => 'Email harus berformat email!',
             'email.unique' => 'Email sudah terdaftar, silahkan gunakan email lain!',
-            'new_password.required_with' => 'Password harus diisi!',
-            'new_password.same' => 'Password harus sama dengan Konfirmasi Password!',
             'new_password.min' => 'Password harus minimal :min karakter!',
-            'new_password_confirmation.required_with' => 'Konfirmasi Password harus diisi!',
+            'new_password_confirmation.same' => 'Konfirmasi password harus sama dengan password baru!',
+            'new_password_confirmation.required_with' => 'Konfirmasi password wajib diisi jika password baru diisi!',
         ]);
 
         $user = User::findOrFail($id);
@@ -53,9 +52,16 @@ class UserController extends Controller
             'password' => $request->new_password ? bcrypt($request->new_password) : $user->password,
         ];
 
-        $user->update($data);
-        sweetalert()->success('Data berhasil diupdate!');
+        try {
+            $user->update($data);
+            sweetalert()->success('Data berhasil diupdate!');
 
-        return redirect('/pengaturan-akun');
+            return redirect('/pengaturan-akun');
+        } catch (Exception $e) {
+            \Log::error('Gagal mengupdate user: '.$e->getMessage());
+            sweetalert()->error('Gagal mengupdate data.');
+
+            return back()->withInput();
+        }
     }
 }

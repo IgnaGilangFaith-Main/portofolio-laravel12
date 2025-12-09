@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -19,26 +20,40 @@ class AuthController extends Controller
             'password.string' => 'Format password tidak valid.',
         ]);
 
-        if (Auth::attempt($credentials)) {
-            $request->session()->regenerate();
-            sweetalert()->info('Selamat datang '.Auth::user()->name.'!');
+        try {
+            if (Auth::attempt($credentials)) {
+                $request->session()->regenerate();
+                sweetalert()->info('Selamat datang '.Auth::user()->name.'!');
 
-            return redirect()->intended('/dashboard');
-        } else {
-            sweetalert()->error('Login Gagal! Email atau Password Salah!');
+                return redirect()->intended('/dashboard');
+            } else {
+                sweetalert()->error('Login Gagal! Email atau Password Salah!');
 
-            return redirect('/login')->onlyInput('email');
+                return redirect('/login')->withInput($request->only('email'));
+            }
+        } catch (Exception $e) {
+            \Log::error('Error saat login: '.$e->getMessage());
+            sweetalert()->error('Terjadi kesalahan saat login. Silakan coba lagi.');
+
+            return redirect('/login')->withInput($request->only('email'));
         }
     }
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        try {
+            Auth::logout();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        sweetalert()->success('Anda telah logout.');
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+            sweetalert()->success('Anda telah logout.');
 
-        return redirect('/login');
+            return redirect('/login');
+        } catch (Exception $e) {
+            \Log::error('Error saat logout: '.$e->getMessage());
+            sweetalert()->error('Terjadi kesalahan saat logout.');
+
+            return redirect('/dashboard');
+        }
     }
 }

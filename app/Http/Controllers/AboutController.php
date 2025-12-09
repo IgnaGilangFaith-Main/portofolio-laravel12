@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\About;
 use App\Models\Skill;
+use Exception;
 use Illuminate\Http\Request;
 
 class AboutController extends Controller
@@ -12,6 +13,10 @@ class AboutController extends Controller
     {
         $about = About::first();
         $skills = Skill::orderBy('id')->get();
+
+        if (! $about) {
+            sweetalert()->warning('Data about belum ada. Silakan tambahkan data about terlebih dahulu.');
+        }
 
         return view('back.about.index', compact('about', 'skills'));
     }
@@ -34,10 +39,17 @@ class AboutController extends Controller
             'deskripsi.required' => 'Deskripsi harus diisi.',
         ]);
 
-        About::create($validated);
-        sweetalert()->success('Data about berhasil ditambahkan.');
+        try {
+            About::create($validated);
+            sweetalert()->success('Data about berhasil ditambahkan.');
 
-        return redirect('/about');
+            return redirect('/about');
+        } catch (Exception $e) {
+            \Log::error('Gagal menyimpan about: '.$e->getMessage());
+            sweetalert()->error('Gagal menyimpan data.');
+
+            return back()->withInput();
+        }
     }
 
     public function edit($id)
@@ -62,10 +74,17 @@ class AboutController extends Controller
             'deskripsi.required' => 'Deskripsi harus diisi.',
         ]);
 
-        $about->update($validated);
-        sweetalert()->success('Data about berhasil diupdate.');
+        try {
+            $about->update($validated);
+            sweetalert()->success('Data about berhasil diupdate.');
 
-        return redirect('/about');
+            return redirect('/about');
+        } catch (Exception $e) {
+            \Log::error('Gagal mengupdate about: '.$e->getMessage());
+            sweetalert()->error('Gagal mengupdate data.');
+
+            return back()->withInput();
+        }
     }
 
     public function delete($id)
@@ -78,10 +97,17 @@ class AboutController extends Controller
     public function destroy($id)
     {
         $about = About::findOrFail($id);
-        $about->delete();
 
-        sweetalert()->success('Data about berhasil dihapus.');
+        try {
+            $about->delete();
+            sweetalert()->success('Data about berhasil dihapus.');
 
-        return redirect('/about');
+            return redirect('/about');
+        } catch (Exception $e) {
+            \Log::error('Gagal menghapus about: '.$e->getMessage());
+            sweetalert()->error('Gagal menghapus data.');
+
+            return back();
+        }
     }
 }

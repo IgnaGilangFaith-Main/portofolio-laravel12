@@ -31,7 +31,12 @@ class ProjectController extends Controller
 
             // hapus file lama SETELAH upload berhasil + basename
             if ($oldFile && file_exists(public_path('img/project/'.basename($oldFile)))) {
-                unlink(public_path('img/project/'.basename($oldFile)));
+                try {
+                    unlink(public_path('img/project/'.basename($oldFile)));
+                } catch (Exception $e) {
+                    \Log::error('Gagal menghapus file lama: '.$e->getMessage(), ['file' => $oldFile]);
+                    // Opsional: throw exception jika ingin hentikan proses
+                }
             }
 
             return $fileName;
@@ -75,10 +80,28 @@ class ProjectController extends Controller
 
         $validated['foto'] = $this->prosesFoto($request->file('foto'));
 
-        Project::create($validated);
-        sweetalert()->success('Project berhasil ditambahkan.');
+        // Jika proses foto gagal, kembalikan error
+        if (! $validated['foto']) {
+            sweetalert()->error('Gagal mengunggah foto.');
 
-        return redirect('/project');
+            return back()->withInput();
+        }
+
+        try {
+            Project::create($validated);
+            sweetalert()->success('Project berhasil ditambahkan.');
+
+            return redirect('/project');
+        } catch (Exception $e) {
+            // Jika create gagal, hapus file foto yang sudah diupload
+            if ($validated['foto'] && file_exists(public_path('img/project/'.$validated['foto']))) {
+                unlink(public_path('img/project/'.$validated['foto']));
+            }
+            \Log::error('Gagal menyimpan project: '.$e->getMessage());
+            sweetalert()->error('Gagal menyimpan data.');
+
+            return back()->withInput();
+        }
     }
 
     public function edit($id)
@@ -108,10 +131,28 @@ class ProjectController extends Controller
 
         $validated['foto'] = $this->prosesFoto($request->file('foto'), $project->foto);
 
-        $project->update($validated);
-        sweetalert()->success('Project berhasil diupdate.');
+        // Jika proses foto gagal dan ada file baru, kembalikan error
+        if ($request->hasFile('foto') && ! $validated['foto']) {
+            sweetalert()->error('Gagal mengunggah foto.');
 
-        return redirect('/project');
+            return back()->withInput();
+        }
+
+        try {
+            $project->update($validated);
+            sweetalert()->success('Project berhasil diupdate.');
+
+            return redirect('/project');
+        } catch (Exception $e) {
+            // Jika update gagal dan ada file baru yang diupload, hapus file baru
+            if ($request->hasFile('foto') && $validated['foto'] !== $project->foto && file_exists(public_path('img/project/'.$validated['foto']))) {
+                unlink(public_path('img/project/'.$validated['foto']));
+            }
+            \Log::error('Gagal mengupdate project: '.$e->getMessage());
+            sweetalert()->error('Gagal mengupdate data.');
+
+            return back()->withInput();
+        }
     }
 
     public function delete($id)
@@ -125,23 +166,31 @@ class ProjectController extends Controller
     {
         $project = Project::findOrFail($id);
 
-        // Hapus foto
-        if ($project->foto) {
-            $filePath = public_path('img/project/'.basename($project->foto));
-            if (file_exists($filePath) && is_file($filePath)) {
-                try {
-                    unlink($filePath);
-                } catch (Exception $e) {
-                    \Log::error('Gagal menghapus foto project: '.$e->getMessage(), [
-                        'file' => $project->foto,
-                    ]);
+        try {
+            $project->delete();
+
+            // Hapus foto SETELAH delete berhasil
+            if ($project->foto) {
+                $filePath = public_path('img/project/'.basename($project->foto));
+                if (file_exists($filePath) && is_file($filePath)) {
+                    try {
+                        unlink($filePath);
+                    } catch (Exception $e) {
+                        \Log::error('Gagal menghapus foto project setelah delete: '.$e->getMessage(), [
+                            'file' => $project->foto,
+                        ]);
+                    }
                 }
             }
+
+            sweetalert()->success('Project berhasil dihapus.');
+
+            return redirect('/project');
+        } catch (Exception $e) {
+            \Log::error('Gagal menghapus project: '.$e->getMessage());
+            sweetalert()->error('Gagal menghapus data.');
+
+            return back();
         }
-
-        $project->delete();
-        sweetalert()->success('Project berhasil dihapus.');
-
-        return redirect('/project');
     }
 }

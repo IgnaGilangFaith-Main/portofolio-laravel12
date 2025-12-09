@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Skill;
+use Exception;
 use Illuminate\Http\Request;
 
 class SkillController extends Controller
@@ -27,10 +28,17 @@ class SkillController extends Controller
             'nama.required' => 'Nama skill harus diisi.',
         ]);
 
-        Skill::create($validated);
-        sweetalert()->success('Skill berhasil ditambahkan.');
+        try {
+            Skill::create($validated);
+            sweetalert()->success('Skill berhasil ditambahkan.');
 
-        return redirect('/skill');
+            return redirect('/skill');
+        } catch (Exception $e) {
+            \Log::error('Gagal menyimpan skill: '.$e->getMessage());
+            sweetalert()->error('Gagal menyimpan data.');
+
+            return back()->withInput();
+        }
     }
 
     public function edit($id)
@@ -50,10 +58,17 @@ class SkillController extends Controller
             'nama.required' => 'Nama skill harus diisi.',
         ]);
 
-        $skill->update($validated);
-        sweetalert()->success('Skill berhasil diupdate.');
+        try {
+            $skill->update($validated);
+            sweetalert()->success('Skill berhasil diupdate.');
 
-        return redirect('/skill');
+            return redirect('/skill');
+        } catch (Exception $e) {
+            \Log::error('Gagal mengupdate skill: '.$e->getMessage());
+            sweetalert()->error('Gagal mengupdate data.');
+
+            return back()->withInput();
+        }
     }
 
     public function delete($id)
@@ -66,10 +81,17 @@ class SkillController extends Controller
     public function destroy($id)
     {
         $skill = Skill::findOrFail($id);
-        $skill->delete();
 
-        sweetalert()->success('Skill berhasil dihapus.');
+        try {
+            $skill->delete();
+            sweetalert()->success('Skill berhasil dihapus.');
 
-        return redirect('/skill');
+            return redirect('/skill');
+        } catch (Exception $e) {
+            \Log::error('Gagal menghapus skill: '.$e->getMessage());
+            sweetalert()->error('Gagal menghapus data.');
+
+            return back();
+        }
     }
 }
